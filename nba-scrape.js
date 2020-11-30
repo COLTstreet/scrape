@@ -2,10 +2,13 @@ var request = require('request');
 var cheerio = require('cheerio');
 var cheerioTableparser = require('cheerio-tableparser');
 
+
+// node C:\Users\cks\Documents\personal\development\scrape\nba-scrape.js
+
 //firebase SDK
 const admin = require('firebase-admin');
 //Service Account for access
-var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\scrape\\Hoopfire-API-a9d366bac3ab.json");
+var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\development\\scrape\\Hoopfire-API-a9d366bac3ab.json");
 
 //Init app
 admin.initializeApp({
@@ -15,7 +18,7 @@ admin.initializeApp({
 var db = admin.firestore();
 
 //Make a request to KenPom url for HMTL
-request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_2019.html&div=div_misc_stats', function (error, response, html) {
+request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_2020.html&div=div_misc_stats', function (error, response, html) {
   if (!error && response.statusCode == 200) {
     //Load HTML into Cheerio
     var $ = cheerio.load(html);

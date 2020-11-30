@@ -5,7 +5,7 @@ var cheerioTableparser = require('cheerio-tableparser');
 //firebase SDK
 const admin = require('firebase-admin');
 //Service Account for access
-var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\scrape\\Hoopfire-API-a9d366bac3ab.json");
+var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\development\\scrape\\Hoopfire-API-a9d366bac3ab.json");
 
 //Init app
 admin.initializeApp({
@@ -17,7 +17,7 @@ var db = admin.firestore();
 var jsonData = [];
 
 //Make a request to url for HMTL
-request('https://herhoopstats.com/stats/leaderboard/team/pace/2019/ncaa-d1-natl/', function (error, response, html) {
+request('https://herhoopstats.com/stats/leaderboard/team/pace/2021/ncaa-d1-natl/', function (error, response, html) {
     if (!error && response.statusCode == 200) {
         //Load HTML into Cheerio
         var $ = cheerio.load(html);
@@ -40,7 +40,7 @@ request('https://herhoopstats.com/stats/leaderboard/team/pace/2019/ncaa-d1-natl/
         paceData.sort(compare);
 
         //oPPP Request
-        request('https://herhoopstats.com/stats/leaderboard/team/pts_per_100_poss/2019/ncaa-d1-natl/', function (error, response, html) {
+        request('https://herhoopstats.com/stats/leaderboard/team/pts_per_100_poss/2021/ncaa-d1-natl/', function (error, response, html) {
             if (!error && response.statusCode == 200) {
                 //Load HTML into Cheerio
                 var $ = cheerio.load(html);
@@ -63,7 +63,7 @@ request('https://herhoopstats.com/stats/leaderboard/team/pace/2019/ncaa-d1-natl/
                 oPPPData.sort(compare);
 
                 //dPPP Request
-                request('https://herhoopstats.com/stats/leaderboard/team/opp_pts_per_100_poss/2019/ncaa-d1-natl/', function (error, response, html) {
+                request('https://herhoopstats.com/stats/leaderboard/team/opp_pts_per_100_poss/2021/ncaa-d1-natl/', function (error, response, html) {
                     if (!error && response.statusCode == 200) {
                         //Load HTML into Cheerio
                         var $ = cheerio.load(html);
@@ -85,6 +85,10 @@ request('https://herhoopstats.com/stats/leaderboard/team/pace/2019/ncaa-d1-natl/
                         }
                         dPPPData.sort(compare);
 
+                        // console.log(paceData);
+                        // console.log(oPPPData);
+                        // console.log(dPPPData);
+
                         //Consolidate Data
                         for(var i = 0; i < dPPPData.length; i++){
                             var team = {
@@ -96,10 +100,14 @@ request('https://herhoopstats.com/stats/leaderboard/team/pace/2019/ncaa-d1-natl/
                             jsonData.push(team);
                         }
 
+                        // console.log(jsonData);
+                        // console.log("------------------------------------------------------------");
+
 
                         // Loop through cleaned data and add to the FireStore
                         for(var i = 0; i < jsonData.length; i++){
                             var ref = db.collection('wbb-teams').doc(jsonData[i].team);
+                            // console.log(jsonData[i]);
                             ref.set(jsonData[i]);
                         }
                     }

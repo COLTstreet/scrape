@@ -5,7 +5,7 @@ var cheerioTableparser = require('cheerio-tableparser');
 //firebase SDK
 const admin = require('firebase-admin');
 //Service Account for access
-var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\scrape\\Hoopfire-API-a9d366bac3ab.json");
+var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\development\\scrape\\Hoopfire-API-a9d366bac3ab.json");
 
 //Init app
 admin.initializeApp({
@@ -15,7 +15,7 @@ admin.initializeApp({
 var db = admin.firestore();
 
 //Make a request to KenPom url for HMTL
-request('https://www.basketball-reference.com/leagues/NBA_2019_games-october.html', function (error, response, html) {
+request('https://www.basketball-reference.com/leagues/NBA_2020_games-april.html', function (error, response, html) {
   if (!error && response.statusCode == 200) {
     
     //Load HTML into Cheerio

@@ -5,7 +5,7 @@ var cheerioTableparser = require('cheerio-tableparser');
 //firebase SDK
 const admin = require('firebase-admin');
 //Service Account for access
-var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\scrape\\Hoopfire-API-a9d366bac3ab.json");
+var serviceAccount = require("C:\\Users\\cks\\Documents\\personal\\development\\scrape\\Hoopfire-API-a9d366bac3ab.json");
 
 //Init app
 admin.initializeApp({
