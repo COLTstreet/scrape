@@ -18,7 +18,7 @@ admin.initializeApp({
 var db = admin.firestore();
 
 //Make a request to KenPom url for HMTL
-request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_2020.html&div=div_misc_stats', function (error, response, html) {
+request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_2022.html&div=div_advanced-team', function (error, response, html) {
   if (!error && response.statusCode == 200) {
     //Load HTML into Cheerio
     var $ = cheerio.load(html);
@@ -27,7 +27,7 @@ request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleag
     cheerioTableparser($);
 
     var jsonData = [];
-    var data = $("#misc_stats").parsetable(true, true, true);
+    var data = $("#advanced-team").parsetable(true, true, true);
 
     //Loop through matrix and created array of objects with associated properties
     for(var i = 1; i < data[0].length; i++){

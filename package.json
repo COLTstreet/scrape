@@ -20,7 +20,8 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "cheerio-tableparser": "^1.0.1",
-    "firebase-admin": "^6.1.0",
+    "firebase-admin": "^5.13.1",
+    "grpc": "^1.24.11",
     "request": "^2.88.0"
   }
 }
