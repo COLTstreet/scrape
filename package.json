@@ -18,10 +18,13 @@
   },
   "homepage": "https://github.com/COLTstreet/scrape#readme",
   "dependencies": {
+    "axios": "^1.2.0",
     "cheerio": "^1.0.0-rc.2",
     "cheerio-tableparser": "^1.0.1",
     "firebase-admin": "^5.13.1",
+    "got": "^12.5.3",
     "grpc": "^1.24.11",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "request-promise": "^4.2.6"
   }
 }
