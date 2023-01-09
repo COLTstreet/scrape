@@ -35,7 +35,7 @@ exports.scrape = functions.pubsub.schedule('0 4 * * *')
         //-------------------------------------------------------- NBA ------------------------------------------------------
 
         //Make a request to KenPom url for HMTL
-        request('https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_2023.html&div=div_advanced-team', async function (error, response, html) {
+        request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-team', async function (error, response, html) {
             if (!error && response.statusCode == 200) {
                 //Load HTML into Cheerio
                 var $ = cheerio.load(html);
