@@ -61,7 +61,14 @@ request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-tea
       // var ref = db.collection('nba-teams').doc(jsonData[i].team);
       // ref.set(jsonData[i]);
       _datarwt.push(db.collection('nba-teams').doc(jsonData[i].team).set(jsonData[i]));
-      const _dataloaded = await Promise.all(_datarwt);
     }
+
+    const _dataloaded = await Promise.all(_datarwt)
+      .then(() => {
+        response.send('NBA COMPLETE');
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 });

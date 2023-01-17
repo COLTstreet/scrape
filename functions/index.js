@@ -69,8 +69,15 @@ exports.scrape = functions.pubsub.schedule('0 4 * * *')
                     // var ref = db.collection('nba-teams').doc(jsonData[i].team);
                     // ref.set(jsonData[i]);
                     _datarwt.push(db.collection('nba-teams').doc(jsonData[i].team).set(jsonData[i]));
-                    const _dataloaded = await Promise.all(_datarwt);
                 }
+
+                const _dataloaded = await Promise.all(_datarwt)
+                  .then(() => {
+                    console.log("NBA COMPLETE")
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
             }
         });
     })
@@ -168,11 +175,16 @@ exports.scrapeCBB = functions.pubsub.schedule('0 4 * * *')
                 //Loop through cleaned data and add to the FireStore
                 for (var i = 0; i < jsonData.length; i++) {
                     _datarwt.push(db.collection('college-teams').doc(jsonData[i].team).set(jsonData[i]));
-                    const _dataloaded = await Promise.all(_datarwt);
                 }
-        
-        
-                console.log("END")
+                
+
+                const _dataloaded = await Promise.all(_datarwt)
+                  .then(() => {
+                    console.log("NCAA COMPLETE")
+                })
+                  .catch((err) => {
+                    console.log(err);
+                });
             })
         } catch (e) {
             console.log(e);
