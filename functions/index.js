@@ -1,6 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const request = require('request');
+const axios = require('axios');
 const cheerio = require('cheerio');
 const cheerioTableparser = require('cheerio-tableparser');
 const requestP = require('request-promise');
@@ -32,54 +32,58 @@ exports.scrape = functions.pubsub.schedule('0 4 * * *')
 
         var db = admin.firestore();
 
-        //-------------------------------------------------------- NBA ------------------------------------------------------
-
-        //Make a request to KenPom url for HMTL
-        request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-team', async function (error, response, html) {
-            if (!error && response.statusCode == 200) {
-                //Load HTML into Cheerio
-                var $ = cheerio.load(html);
-
-                //Load cheerio htl, into cheerioTableParser plugin
-                cheerioTableparser($);
-
-                var jsonData = [];
-                var data = $("#advanced-team").parsetable(true, true, true);
-
-                //Loop through matrix and created array of objects with associated properties
-                for (var i = 1; i < data[0].length; i++) {
-                    var team = {
-                        "rank": data[0][i],
-                        "team": data[1][i],
-                        "wins": data[3][i],
-                        "losses": data[4][i],
-                        "oRtg": data[10][i],
-                        "dRtg": data[11][i],
-                        "pace": data[13][i]
-                    }
-                    jsonData.push(team);
-                    console.log(team.team);
-                }
-                //Remove initial elment bc its filled with the titles of the columns
-                jsonData.splice(0, 1);
-
-                var _datarwt = [];
-                // //Loop through cleaned data and add to the FireStore
-                for (var i = 0; i < jsonData.length; i++) {
-                    // var ref = db.collection('nba-teams').doc(jsonData[i].team);
-                    // ref.set(jsonData[i]);
-                    _datarwt.push(db.collection('nba-teams').doc(jsonData[i].team).set(jsonData[i]));
-                }
-
-                const _dataloaded = await Promise.all(_datarwt)
-                  .then(() => {
-                    console.log("NBA COMPLETE")
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                  });
+        const config = {
+            headers: {
+                'Accept-Encoding': 'application/json',
             }
-        });
+        };
+
+        try {
+            const res = await axios.get('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-team', config)
+
+            //Load HTML into Cheerio
+            var $ = cheerio.load(res.data);
+
+            //Load cheerio htl, into cheerioTableParser plugin
+            cheerioTableparser($);
+
+            var jsonData = [];
+            var data = $("#advanced-team").parsetable(true, true, true);
+
+            //Loop through matrix and created array of objects with associated properties
+            for (var i = 1; i < data[0].length; i++) {
+                var team = {
+                    "rank": data[0][i],
+                    "team": data[1][i],
+                    "wins": data[3][i],
+                    "losses": data[4][i],
+                    "oRtg": data[10][i],
+                    "dRtg": data[11][i],
+                    "pace": data[13][i]
+                }
+                jsonData.push(team);
+                // console.log(team.team);
+            }
+            //Remove initial elment bc its filled with the titles of the columns
+            jsonData.splice(0, 1);
+
+            const _datarwt = [];
+            // //Loop through cleaned data and add to the FireStore
+            for (var i = 0; i < jsonData.length; i++) {
+                _datarwt.push(db.collection('nba-teams').doc(jsonData[i].team).set(jsonData[i]));
+            }
+
+            const _dataloaded = await Promise.all(_datarwt)
+                .then(() => {
+                    console.log('NBA COMPLETE')
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        } catch (err) {
+            // Handle Error Here
+            console.error(err);
+        }
     })
 
 exports.scrapeCBB = functions.pubsub.schedule('0 4 * * *')
@@ -110,82 +114,70 @@ exports.scrapeCBB = functions.pubsub.schedule('0 4 * * *')
         var db = admin.firestore();
 
         //-------------------------------------------------------- CBB ------------------------------------------------------
-        
-        var options = {
-            uri: `http://api.scraperapi.com/`,
-            qs: {
-                'api_key': '23f4e9c6c8768dce74cb520cd744db10',
-                'url': 'https://kenpom.com'
-            },
-            retry: 5,
-            verbose_logging: false,
-            accepted: [200, 404, 403],
-            delay: 5000,
-            factor: 2,
-            resolveWithFullResponse: true
-        }
-        
-        try {
-            console.log("START")
-            const response = requestP(options);
-            response.then(async fullResponse => {
-        
-                let $ = cheerio.load(fullResponse.body);
-        
-                //Load cheerio htl, into cheerioTableParser plugin
-                cheerioTableparser($);
-        
-                var jsonData = [];
-                var data = $("#ratings-table").parsetable(true, true, true);
-        
-        
-                console.log("CREATE DATA")
-        
-                //Loop through matrix and created array of objects with associated properties
-                for (var i = 0; i < data[0].length; i++) {
-                    var team = {
-                        "rank": data[0][i],
-                        "team": data[1][i].replace(/\d+/g, '').trim(),
-                        "conference": data[2][i],
-                        "winLoss": data[3][i],
-                        "adjEM": data[4][i],
-                        "adjO": data[5][i],
-                        "adjD": data[7][i],
-                        "adjT": data[9][i],
-                        "luck": data[11][i],
-                        "oppO": data[15][i],
-                        "oppD": data[17][i]
-                    }
-                    jsonData.push(team);
-                }
-        
-                //Due to the nature of the table at KenPom, some data cleanup is needed
-                //Loop backwards and remove items that meet the criteria
-                var i = jsonData.length
-                while (i--) {
-                    if (jsonData[i].rank === "" || jsonData[i].rank === "Rank") {
-                        jsonData.splice(i, 1);
-                    }
-                }
-        
-        
-                console.log("ADD TO FIRESTORE")
-        
-                var _datarwt = [];
-                //Loop through cleaned data and add to the FireStore
-                for (var i = 0; i < jsonData.length; i++) {
-                    _datarwt.push(db.collection('college-teams').doc(jsonData[i].team).set(jsonData[i]));
-                }
-                
 
-                const _dataloaded = await Promise.all(_datarwt)
-                  .then(() => {
-                    console.log("NCAA COMPLETE")
+
+        try {
+
+            const API_KEY = '23f4e9c6c8768dce74cb520cd744db10'
+            const url = 'https://kenpom.com';
+            const res = await axios('http://api.scraperapi.com/', {
+                params: {
+                    'url': url,
+                    'api_key': API_KEY,
+                },
+                headers: {
+                    'Accept-Encoding': 'application/json',
+                }
+            })
+            let $ = cheerio.load(res.data);
+
+            //Load cheerio htl, into cheerioTableParser plugin
+            cheerioTableparser($);
+
+            var jsonData = [];
+            var data = $("#ratings-table").parsetable(true, true, true);
+
+            //Loop through matrix and created array of objects with associated properties
+            for (var i = 0; i < data[0].length; i++) {
+                var team = {
+                    "rank": data[0][i],
+                    "team": data[1][i].replace(/\d+/g, '').trim(),
+                    "conference": data[2][i],
+                    "winLoss": data[3][i],
+                    "adjEM": data[4][i],
+                    "adjO": data[5][i],
+                    "adjD": data[7][i],
+                    "adjT": data[9][i],
+                    "luck": data[11][i],
+                    "oppO": data[15][i],
+                    "oppD": data[17][i]
+                }
+                jsonData.push(team);
+            }
+
+            //Due to the nature of the table at KenPom, some data cleanup is needed
+            //Loop backwards and remove items that meet the criteria
+            var i = jsonData.length
+            while (i--) {
+                if (jsonData[i].rank === "" || jsonData[i].rank === "Rank") {
+                    jsonData.splice(i, 1);
+                }
+            }
+
+            const _datarwt = [];
+            // //Loop through cleaned data and add to the FireStore
+            for (var i = 0; i < jsonData.length; i++) {
+                _datarwt.push(db.collection('college-teams').doc(jsonData[i].team).set(jsonData[i]))
+            }
+
+            const _dataloaded = await Promise.all(_datarwt)
+                .then(() => {
+                    console.log('NCAA COMPLETE')
                 })
-                  .catch((err) => {
+                .catch((err) => {
                     console.log(err);
                 });
-            })
+
         } catch (e) {
             console.log(e);
             return e

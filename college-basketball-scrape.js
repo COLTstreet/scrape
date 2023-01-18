@@ -27,35 +27,27 @@ admin.initializeApp({
 
 var db = admin.firestore();
 
-var options = {
-  uri: `http://api.scraperapi.com/`,
-  qs: {
-    'api_key': '23f4e9c6c8768dce74cb520cd744db10',
-    'url': 'https://kenpom.com'
-  },
-  retry: 5,
-  verbose_logging: false,
-  accepted: [200, 404, 403],
-  delay: 5000,
-  factor: 2,
-  resolveWithFullResponse: true
-}
+const scrapeNCAA = async () => {
+  try {
 
-try {
-  console.log("START")
-  const response = requestP(options);
-  response.then(fullResponse => {
-
-    let $ = cheerio.load(fullResponse.body);
+    const API_KEY = '23f4e9c6c8768dce74cb520cd744db10'
+    const url = 'https://kenpom.com';
+    const res = await axios('http://api.scraperapi.com/', {
+      params: {
+        'url': url,
+        'api_key': API_KEY,
+      },
+      headers: {
+        'Accept-Encoding': 'application/json',
+      }
+    })
+    let $ = cheerio.load(res.data);
 
     //Load cheerio htl, into cheerioTableParser plugin
     cheerioTableparser($);
 
     var jsonData = [];
     var data = $("#ratings-table").parsetable(true, true, true);
-
-
-    console.log("CREATE DATA")
 
     //Loop through matrix and created array of objects with associated properties
     for (var i = 0; i < data[0].length; i++) {
@@ -84,19 +76,24 @@ try {
       }
     }
 
-
-    console.log("ADD TO FIRESTORE")
-
-    //Loop through cleaned data and add to the FireStore
+    const _datarwt = [];
+    // //Loop through cleaned data and add to the FireStore
     for (var i = 0; i < jsonData.length; i++) {
-      var testRef = db.collection('college-teams').doc(jsonData[i].team);
-      testRef.set(jsonData[i]);
+      _datarwt.push(db.collection('college-teams').doc(jsonData[i].team).set(jsonData[i]))
     }
 
+    const _dataloaded = await Promise.all(_datarwt)
+      .then(() => {
+        console.log('NCAA COMPLETE')
+      })
+      .catch((err) => {
+        console.log(err);
+      });
 
-    console.log("END")
-  })
-} catch (e) {
-  console.log(e);
-  return e
-}
+  } catch (e) {
+    console.log(e);
+    return e
+  }
+};
+
+scrapeNCAA();

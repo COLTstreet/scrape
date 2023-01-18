@@ -1,5 +1,5 @@
-var request = require('request');
 var cheerio = require('cheerio');
+var axios = require('axios');
 var cheerioTableparser = require('cheerio-tableparser');
 const admin = require('firebase-admin');
 
@@ -26,11 +26,18 @@ admin.initializeApp({
 
 var db = admin.firestore();
 
-//Make a request to KenPom url for HMTL
-request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-team', async function (error, response, html) {
-  if (!error && response.statusCode == 200) {
+const config = {
+  headers: {
+    'Accept-Encoding': 'application/json',
+  }
+};
+
+const scrapeNBA = async () => {
+  try {
+    const res = await axios.get('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-team', config)
+
     //Load HTML into Cheerio
-    var $ = cheerio.load(html);
+    var $ = cheerio.load(res.data);
 
     //Load cheerio htl, into cheerioTableParser plugin
     cheerioTableparser($);
@@ -50,7 +57,7 @@ request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-tea
         "pace": data[13][i]
       }
       jsonData.push(team);
-      console.log(team.team);
+      // console.log(team.team);
     }
     //Remove initial elment bc its filled with the titles of the columns
     jsonData.splice(0, 1);
@@ -58,17 +65,20 @@ request('https://www.basketball-reference.com/leagues/NBA_2023.html#advanced-tea
     const _datarwt = [];
     // //Loop through cleaned data and add to the FireStore
     for (var i = 0; i < jsonData.length; i++) {
-      // var ref = db.collection('nba-teams').doc(jsonData[i].team);
-      // ref.set(jsonData[i]);
       _datarwt.push(db.collection('nba-teams').doc(jsonData[i].team).set(jsonData[i]));
     }
 
     const _dataloaded = await Promise.all(_datarwt)
       .then(() => {
-        response.send('NBA COMPLETE');
+        console.log('NBA COMPLETE')
       })
       .catch((err) => {
         console.log(err);
       });
+  } catch (err) {
+    // Handle Error Here
+    console.error(err);
   }
-});
+};
+
+scrapeNBA();
